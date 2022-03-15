@@ -25,43 +25,22 @@ addKey() {
 }
 
 if [ "x${1}" == "x" ]; then
-    echo please pass PKGURL as an environment variable
+    echo please pass UNIFI_URL as an environment variable
     exit 0
 fi
 
-apt-get update
-apt-get install -qy --no-install-recommends \
-    apt-transport-https \
-    curl \
-    dirmngr \
-    gpg \
-    gpg-agent \
-    openjdk-8-jre-headless \
-    procps \
-    libcap2-bin \
-    tzdata
+wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | apt-key add -
+echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/debian/dists/buster/mongodb-org/5.0/main/" | tee /etc/apt/sources.list.d/mongodb-org-5.0.list
+
+# add-apt-repository 'deb [arch=amd64] https://repo.mongodb.org/apt/debian/dists/buster/mongodb-org/4.4/main/'
+# apt-get install -q=2 --no-install-recommends --allow-unauthenticated \
+#     mongodb-org
+
 echo 'deb https://www.ui.com/downloads/unifi/debian stable ubiquiti' | tee /etc/apt/sources.list.d/100-ubnt-unifi.list
 tryfail apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 06E85760C0A52C50
 
 if [ -d "/usr/local/docker/pre_build/$(dpkg --print-architecture)" ]; then
     find "/usr/local/docker/pre_build/$(dpkg --print-architecture)" -type f -exec '{}' \;
 fi
-
-curl -L -o ./unifi.deb "${1}"
-apt -qy install ./unifi.deb
-rm -f ./unifi.deb
-chown -R unifi:unifi /usr/lib/unifi
-rm -rf /var/lib/apt/lists/*
-
-rm -rf ${ODATADIR} ${OLOGDIR} ${ORUNDIR}
-mkdir -p ${DATADIR} ${LOGDIR} ${RUNDIR}
-ln -s ${DATADIR} ${BASEDIR}/data
-ln -s ${RUNDIR} ${BASEDIR}/run
-ln -s ${LOGDIR} ${BASEDIR}/logs
-ln -s ${DATADIR} ${ODATADIR}
-ln -s ${LOGDIR} ${OLOGDIR}
-ln -s ${RUNDIR} ${ORUNDIR}
-mkdir -p /var/cert ${CERTDIR}
-ln -s ${CERTDIR} /var/cert/unifi
 
 rm -rf "${0}"
